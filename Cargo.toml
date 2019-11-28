@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Esteban <esguti@protonmail.com>"]
 edition = "2018"
 description = "Implementation of a generic block of a Blockchain with minimal dependencies"
+repository = "https://github.com/esguti/blockchain-base"
 keywords = ["blockchain", "merkle", "block"]
 categories = ["cryptography::cryptocurrencies", "data-structures", "algorithms"]
 license = "AGPL-3.0-only"
