@@ -18,3 +18,16 @@ impl Byteable for String{
         data.to_vec()
     }
 }
+
+impl<T> Byteable for [T]
+where
+    T: Byteable,
+{
+    fn bytes(&self) -> Vec<u8> {
+        let mut data : Vec<u8> = Vec::new();
+        for x in self {
+            data.extend(x.bytes().iter().cloned());
+        }
+        data
+    }
+}

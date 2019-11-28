@@ -3,13 +3,13 @@ use std::fmt;
 use super::*;
 
 /// Structure for storing one Block of the Blockchain.
-pub struct BlockchainBlock<T>{
+pub struct BlockchainBlock<'a, T>{
     /// hash of the current block
     pub curr_hash: BlockHash,
     /// hash of the previous block. Is `None` for the first block
     pub prev_hash: Option<BlockHash>,
     /// encrypted data in compressed form
-    pub data: T,
+    pub data: &'a[T],
     /// time of block creation in seconds since 1970-01-01T00:00 UTC
     pub timestamp: u64,
     /// field used for giving variability
@@ -21,117 +21,160 @@ pub struct BlockchainBlock<T>{
 }
 
 /// Implementation of BlockchainBlock for a generic type `T`
-impl<T> BlockchainBlock<T>
+impl<'a, T> BlockchainBlock<'a, T>
 where
-    T: Byteable,
+    T: Byteable + Clone
 {    
     /// Constructs a new `BlockchainBlock<T>`.
     ///
     /// # Examples
     ///
-    /// Simple example with i32 data
+    /// Simple example with i32
     ///
     /// ```
     ///   extern crate blockchainblock;
     ///   use crate::blockchainblock::*;
     ///   
-    ///   let prev  : Option<BlockHash> = Some([1; BLOCKHASHLEN]);
-    ///   let merk  : Vec<Box<BlockchainBlock<i32>>> = vec![];
+    ///   let prev  : Option<BlockHash> = None;
     ///   let nonce : u64 = 3;
     ///   let timestamp : u64 = 4;
-    ///   let data : i32 = 5;
-    ///   let block : BlockchainBlock<i32> = BlockchainBlock::new(prev, data, timestamp, nonce, &merk);
+    ///   let data : [i32; 1] = [5];
+    ///   let block : BlockchainBlock<i32> = BlockchainBlock::new(prev, &data, timestamp, nonce);
     ///   println!("\n{:?}\n", &block);
-    ///   assert_eq!(block.curr_hash, [174, 98, 223, 59, 198, 22, 229, 2, 105, 113, 32, 226, 166, 118, 72, 94, 155, 43, 68, 112, 126, 155, 189, 147, 22, 204, 112, 35, 78, 209, 167, 78]);
+    ///   assert_eq!(block.curr_hash, [23, 105, 91, 179, 190, 192, 178, 189, 198, 134, 87, 143, 214, 135, 93, 17, 50, 143, 192, 3, 254, 144, 115, 123, 42, 223, 197, 199, 181, 113, 224, 123]);
     /// ```
     ///
-    /// Example with String data
+    /// Example with array of Strings
     ///
     /// ```
-    ///   extern crate blockchainblock;
-    ///   use crate::blockchainblock::*;
-    ///       
-    ///   let book_reviews = String::from(
-    ///    "{
-    ///     \"Adventures of Huckleberry Finn\": \"My favorite book.\",
-    ///     \"Grimms' Fairy Tales\": \"Masterpiece.\",
-    ///     \"Pride and Prejudice\": \"Very enjoyable.\",
-    ///     \"The Adventures of Sherlock Holmes\": \"Eye lyked it alot.\",
-    ///     }"
-    ///   );
-    /// 
-    ///   let prev  : Option<BlockHash> = Some([1; BLOCKHASHLEN]);
-    ///   let merk  : Vec<Box<BlockchainBlock<String>>> = vec![];
-    ///   let nonce : u64 = 3;
-    ///   let timestamp = std::time::Duration::from_secs(1524885322).as_secs();
-    ///   let block : BlockchainBlock<String> = BlockchainBlock::new(prev, book_reviews, timestamp, nonce, &merk);
+    /// extern crate blockchainblock;
+    /// use crate::blockchainblock::*;
     ///     
-    ///   println!("\n{:?}\n", &block);
-    ///   assert_eq!(block.curr_hash, [168, 100, 204, 131, 252, 20, 69, 148, 230, 74, 165, 38, 154, 240, 27, 75, 141, 210, 40, 176, 124, 125, 180, 245, 86, 104, 17, 204, 215, 175, 198, 246]);
+    /// let book_reviews = [
+    ///  String::from(
+    ///   "{
+    ///    \"Adventures of Huckleberry Finn\": \"My favorite book.\",
+    ///    \"Grimms' Fairy Tales\": \"Masterpiece.\",
+    ///    \"Pride and Prejudice\": \"Very enjoyable.\",
+    ///    \"The Adventures of Sherlock Holmes\": \"Eye lyked it alot.\",
+    ///    }"),
+    ///  String::from(
+    ///   "{
+    ///    \"Adventures of Huckleberry Finn\": \"My favorite book.\",
+    ///    \"Grimms' Fairy Tales\": \"Masterpiece.\",
+    ///    \"Pride and Prejudice\": \"Very enjoyable.\",
+    ///    \"The Adventures of Sherlock Holmes\": \"Eye lyked it alot.\",
+    ///    }")
+    /// ];
+     
+    /// let prev  : Option<BlockHash> = Some([1; BLOCKHASHLEN]);
+    /// let nonce : u64 = 3;
+    /// let timestamp = std::time::Duration::from_secs(1524885322).as_secs();
+    /// let block : BlockchainBlock<String> = BlockchainBlock::new(prev, &book_reviews, timestamp, nonce);
+    ///   
+    /// println!("\n{:?}\n", &block);
+    /// assert_eq!(block.curr_hash, [220, 149, 236, 219, 173, 29, 131, 71, 35, 245, 97, 228, 58, 247, 45, 86, 197, 104, 26, 236, 232, 98, 144, 4, 220, 210, 177, 17, 235, 113, 214, 18]);
     /// ```
-
-    /// Example with vector of blocks
-    ///
-    /// ```
-    ///   extern crate blockchainblock;
-    ///   use crate::blockchainblock::*;    
-    ///   const MERKLE_SIZE : usize = 8;
-    ///   let mut prev : Option<BlockHash> = None;
-    ///   let mut merk  : Vec<Box<BlockchainBlock<String>>> = vec![];
-    ///   let mut nonce : u64 = 0;
-    ///   for idx in 0..MERKLE_SIZE {
-    ///       let book_reviews = idx.to_string();
-    ///       nonce += 1;
-    ///       let timestamp = std::time::Duration::from_secs(1524885322+nonce)
-    ///           .as_secs();
-    ///       let block = Box::new(BlockchainBlock::new(prev, book_reviews, timestamp, nonce, &merk));
-    ///       prev = Some(block.curr_hash);
-    ///       merk.push(block);
-    ///       println!("\n{:?}\n", merk);
-    ///   }
-    ///   let block = &merk[MERKLE_SIZE-1];
-    ///   println!("\n{:?}\n", block);
-    ///   assert_eq!(block.merkle_root, [215, 93, 242, 152, 17, 122, 84, 209, 39, 180, 167, 206, 155, 213, 206, 153, 113, 204, 119, 246, 251, 237, 192, 2, 148, 31, 149, 32, 3, 88, 18, 106]);
-    /// ```
-    
-    pub fn new(prev_hash: Option<BlockHash>, data: T, timestamp: u64, nonce: u64, merkle_root: &Vec<Box<BlockchainBlock<T>>>) -> BlockchainBlock<T> {
+   
+    pub fn new(prev_hash: Option<BlockHash>, data: &[T], timestamp: u64, nonce: u64) -> BlockchainBlock<T> {
         let mut block = BlockchainBlock {
             prev_hash,
             data,
-            timestamp,
+            timestamp, 
             merkle_root : [ 0; BLOCKHASHLEN],
             nonce,
             version : VERSION,
             curr_hash : [ 0; BLOCKHASHLEN]
         };
-        block.calculate_hash();
-        if merkle_root.len() > 0 { block.calculate_merkle_root(&merkle_root[..]); }
-        else{ block.merkle_root = block.curr_hash; } // In the first node, the merkle root is the hash of the node
+        if data.len() > 0 { block.merkle_root = block.calculate_merkle_root(data); }
+        block.calculate_hash();        
         block
     }
 
-    fn calculate_merkle_root<'a> (&'a mut self, blocks: &'a [Box<BlockchainBlock<T>>]) -> &'a BlockHash{
-        const DOUBLE_BLOCK_LEN : usize = BLOCKHASHLEN * 2;
-        
-        let size = blocks.len();
-        if size == 1 {
-            return &(blocks[0].curr_hash);
-        }else{
-            let (left, right) = blocks.split_at(size/2);
-            let mut bytes: [u8; DOUBLE_BLOCK_LEN] = [0; DOUBLE_BLOCK_LEN];;
-            bytes[..BLOCKHASHLEN].clone_from_slice(self.calculate_merkle_root(&left));
-            bytes[BLOCKHASHLEN..].clone_from_slice(self.calculate_merkle_root(&right));
+    /// Check data is inside the block calculating the new merkle root
+    ///
+    /// # Examples
+    ///    
+    /// Example checking String is inside the Block
+    ///
+    /// ```
+    /// extern crate blockchainblock;
+    /// use crate::blockchainblock::*;    
+    /// let string_check = String::from(
+    ///     "{\"The Adventures of Sherlock Holmes\",\"Grimms' Fairy Tales\"}"
+    /// );
+    /// let book_reviews = [
+    ///     String::from(
+    ///         "{\"Adventures of Huckleberry Finn\",\"Grimms' Fairy Tales\"}"
+    ///     ),
+    ///     String::from(
+    ///         "{\"Eloquent JavaScript, Second Edition\",\"Learning JavaScript Design Patterns\"}"
+    ///     ),
+    ///     string_check.clone(),
+    ///     String::from(
+    ///         "{\"Speaking JavaScript\",\"Programming JavaScript Applications\"}"
+    ///     ),
+    /// ];
+    /// 
+    /// let prev  : Option<BlockHash> = None;
+    /// let nonce : u64 = 1;
+    /// let timestamp = std::time::Duration::from_secs(1524885322).as_secs();
+    /// let block : BlockchainBlock<String> = BlockchainBlock::new(prev, &book_reviews, timestamp, nonce);
+    ///    
+    /// println!("\n{:?}\n", &block);
+    /// assert_eq!(block.check_value_inblock(&string_check,2), true);
+    /// ```
 
-            let digest = digest(Algorithm::SHA256, &bytes);
-            &self.merkle_root.copy_from_slice(&digest);
-            return &self.merkle_root;
-        }
+    pub fn check_value_inblock(&self, data: &T, position: usize) -> bool{
+        if position >= self.data.len(){ return false; }
+        let mut temp = self.data.to_vec();
+        temp[position] = data.clone();
+        if self.calculate_merkle_root(&temp[..]) == self.merkle_root { return true; }
+        else{ return false; }
+    }
+    
+    fn calculate_merkle_hash<'b>(&self, block_left: &'b BlockHash, block_right: &'b BlockHash) -> BlockHash{
+        const DOUBLE_BLOCK_LEN : usize = BLOCKHASHLEN * 2;
+        let mut bytes: [u8; DOUBLE_BLOCK_LEN] = [0; DOUBLE_BLOCK_LEN];
+        
+        bytes[..BLOCKHASHLEN].clone_from_slice(block_left);
+        bytes[BLOCKHASHLEN..].clone_from_slice(block_right);
+        let digest = digest(Algorithm::SHA256, &bytes);
+        let mut result: BlockHash = [0; BLOCKHASHLEN];
+        result.copy_from_slice(&digest);
+        return result;
     }
 
+    fn calculate_merkle_root (&self, blocks: &[T]) -> BlockHash{
+        
+        let size = blocks.len();
+        match size {
+            1 | 2 => {
+                let mut bytes : Vec<u8> = Vec::new();
+                if size == 1 {
+                    bytes.append(&mut blocks[0].bytes());
+                    bytes.append(&mut blocks[0].bytes());
+                } else {
+                    bytes.append(&mut blocks[0].bytes());
+                    bytes.append(&mut blocks[1].bytes());
+                }
+                let digest = digest(Algorithm::SHA256, &bytes);
+                let mut result: BlockHash = [0; BLOCKHASHLEN];
+                result.copy_from_slice(&digest);
+                return result;
+            },
+            _ => {
+                let (left, right) = blocks.split_at(size/2);
+                return self.calculate_merkle_hash(
+                    &self.calculate_merkle_root(&left),
+                    &self.calculate_merkle_root(&right));
+            },
+        }
+    }
     
 }
 
-impl<T: fmt::Debug> fmt::Debug for BlockchainBlock<T>{
+impl<'a, T: fmt::Debug> fmt::Debug for BlockchainBlock<'a, T>{
     fn fmt (&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.debug_struct("Block")
             .field("Current Hash", &self.curr_hash)
@@ -147,7 +190,7 @@ impl<T: fmt::Debug> fmt::Debug for BlockchainBlock<T>{
 }
 
 
-impl<T> Hashable for BlockchainBlock<T>
+impl<'a, T> Hashable for BlockchainBlock<'a, T>
 where
     T: Byteable,
 {
@@ -194,4 +237,11 @@ where
         let digest = digest(Algorithm::SHA256, &bytes);
         &self.curr_hash.copy_from_slice(&digest);
     }
+
 }
+
+// #[test]
+// fn test() {
+  
+// }
+
