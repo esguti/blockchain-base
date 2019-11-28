@@ -1,3 +1,7 @@
+//! Provides a customizable base for a blockchain implementation
+
+#![warn(missing_docs)]
+
 /// Version of the protocol as appearing in block headers.
 pub const VERSION: u8 = 1;
 /// Lenght of the Hash block.

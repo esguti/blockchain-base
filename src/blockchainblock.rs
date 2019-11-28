@@ -2,7 +2,7 @@ use crypto_hash::{Algorithm, digest};
 use std::fmt;
 use super::*;
 
-/// Structure for storing one Block of the Blockchain.
+/// Structure for storing one Block of the Blockchain with as few dependencies as possible.
 pub struct BlockchainBlock<'a, T>{
     /// hash of the current block
     pub curr_hash: BlockHash,
@@ -26,6 +26,14 @@ where
     T: Byteable + Clone
 {    
     /// Constructs a new `BlockchainBlock<T>`.
+    ///
+    /// # Description
+    ///
+    /// * `prev_hash` - Hash of the previous block.
+    /// * `data` - Data to be stored in the block.
+    /// * `timestamp` - Creation time in *Unix time* format.
+    /// * `nonce` - Nonce to include variability in the hash calculation.
+    ///    
     ///
     /// # Examples
     ///
@@ -91,7 +99,13 @@ where
         block
     }
 
-    /// Check data is inside the block calculating the new merkle root
+    /// Check data is inside the block.
+    /// Calculate a merkle root and compare it with the one stored in the block.
+    ///
+    /// # Description
+    ///
+    /// * `data` - Data to be checked.
+    /// * `position` - Position of the data in the original array. 0 <= pos < block.data.len()
     ///
     /// # Examples
     ///    
