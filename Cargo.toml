@@ -10,6 +10,7 @@ categories = ["cryptography::cryptocurrencies", "data-structures", "algorithms"]
 license = "AGPL-3.0-only"
 maintenance = { status = "passively-maintained" }
 doc = true
+doctest = true
 
 [lib]
 name = "blockchainblock"
