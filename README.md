@@ -35,4 +35,4 @@ This crate was inspired by [blockchain-rust](https://github.com/GeekLaunch/block
 
 ## Legal
 
-`blockchain-base` is copyrighted under the terms of the [AGPL-3.0](https://img.shields.io/github/license/esguti/blockchain-base) license. See LICENSE for details.
+`blockchain-base` is copyrighted under the terms of the AGPL-3.0 license. See [LICENSE](LICENSE.md) for details.
