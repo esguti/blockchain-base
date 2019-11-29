@@ -1,11 +1,16 @@
 # `blockchain-base`
 
-[![Crates.io](https://img.shields.io/github/v/tag/esguti/blockchain-base?style=plastic)](https://crates.io/crates/crypto-hash)
+[![Crates.io](https://img.shields.io/github/v/tag/esguti/blockchain-base?style=plastic)](https://crates.io/crates/blockchain-base)
 
 `blockchain-base` provides a customizable base for a blockchain implementation.
 
 The purpose of this crate is to build your own Blockchain with as few dependencies as
 possible. This means that when possible, the library uses the standard Rust structures and functions.
+
+It is in the process to be part of [blockchain-satellite](https://github.com/sergiomtzlosa/blockchain-satellite) project for implementing an original idea of a blockchain over a Low-Orbit satellite. The idea is described on the paper:
+
+[Blockchain and radio communications over suborbital spaceflights: Watchtowers and Mystics](https://arxiv.org/abs/1910.04835)
+
 
 ## Usage
 
